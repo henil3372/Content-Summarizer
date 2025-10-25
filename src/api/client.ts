@@ -155,3 +155,93 @@ export async function deleteJob(id: string): Promise<{ message: string; id: stri
 
   return response.json();
 }
+
+export interface OCRResult {
+  id: string;
+  status: string;
+  result: any;
+}
+
+export async function uploadImageForOCR(imageFile: File): Promise<OCRResult> {
+  const formData = new FormData();
+  formData.append('image', imageFile);
+
+  const response = await fetch(`${API_BASE_URL}/content/ocr`, {
+    method: 'POST',
+    body: formData
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to process image');
+  }
+
+  return response.json();
+}
+
+export interface ContentSubmitResponse {
+  id: string;
+  contentType: 'reel' | 'post';
+  status: string;
+}
+
+export async function submitContent(url: string): Promise<ContentSubmitResponse> {
+  const response = await fetch(`${API_BASE_URL}/content/submit`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url })
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to submit content');
+  }
+
+  return response.json();
+}
+
+export async function getContentItem(id: string): Promise<any> {
+  const response = await fetch(`${API_BASE_URL}/content/${id}`);
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to get content item');
+  }
+
+  return response.json();
+}
+
+export async function listContentItems(filters?: {
+  content_type?: 'reel' | 'post' | 'ocr';
+  status?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<{ results: any[]; total: number; limit: number; offset: number }> {
+  const params = new URLSearchParams();
+  if (filters?.content_type) params.append('content_type', filters.content_type);
+  if (filters?.status) params.append('status', filters.status);
+  if (filters?.limit) params.append('limit', filters.limit.toString());
+  if (filters?.offset) params.append('offset', filters.offset.toString());
+
+  const response = await fetch(`${API_BASE_URL}/content?${params}`);
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to list content items');
+  }
+
+  return response.json();
+}
+
+export async function deleteContentItem(id: string): Promise<{ message: string; id: string }> {
+  const response = await fetch(`${API_BASE_URL}/content/${id}`, {
+    method: 'DELETE'
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to delete content item');
+  }
+
+  return response.json();
+}
